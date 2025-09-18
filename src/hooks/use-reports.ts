@@ -21,12 +21,22 @@ export const useReports = () => {
     }
 
     setIsLoading(true);
-    // Query reports for the current user
-    const q = query(
-      collection(db, 'reports'),
-      where('userId', '==', user.id),
-      orderBy('createdAt', 'desc')
-    );
+    
+    let q;
+    // If the user is the judge, fetch all reports. Otherwise, fetch only their own.
+    if (user.id === 'judge-user-01') {
+      q = query(
+        collection(db, 'reports'),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      q = query(
+        collection(db, 'reports'),
+        where('userId', '==', user.id),
+        orderBy('createdAt', 'desc')
+      );
+    }
+
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const reportsData: Report[] = [];
