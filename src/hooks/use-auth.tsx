@@ -15,11 +15,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user for prototype phase
+// Pre-existing user for judges
+// IMPORTANT: Ensure a user with this ID exists in your Firestore 'users' collection
+// and has reports associated with it in the 'reports' collection.
 const mockUser: User = {
-  id: 'prototype-user-id',
-  email: 'user@example.com',
-  name: 'Demo User',
+  id: 'judge-user-01',
+  email: 'judge@example.com',
+  name: 'Judge',
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
