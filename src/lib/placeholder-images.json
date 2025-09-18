@@ -1,0 +1,22 @@
+{
+  "placeholderImages": [
+    {
+      "id": "report-1",
+      "description": "Large pothole on a city street.",
+      "imageUrl": "https://picsum.photos/seed/1/600/400",
+      "imageHint": "pothole road"
+    },
+    {
+      "id": "report-2",
+      "description": "Graffiti on a brick wall.",
+      "imageUrl": "https://picsum.photos/seed/2/600/400",
+      "imageHint": "graffiti wall"
+    },
+    {
+      "id": "report-3",
+      "description": "A broken streetlight during the day.",
+      "imageUrl": "https://picsum.photos/seed/3/600/400",
+      "imageHint": "broken streetlight"
+    }
+  ]
+}
