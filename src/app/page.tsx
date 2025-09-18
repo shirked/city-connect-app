@@ -24,12 +24,8 @@ export default function HomePage() {
     const [isReportsLoading, setIsReportsLoading] = useState(true);
   
     useEffect(() => {
-        if (!isAuthLoading && !user) {
-          router.replace("/login");
-        }
-    }, [user, isAuthLoading, router]);
-
-    useEffect(() => {
+      // This effect used to redirect to /login, it's no longer needed.
+      // We will now fetch reports directly as the user is mocked.
       if(user) {
         setIsReportsLoading(true);
         const q = query(
@@ -62,7 +58,7 @@ export default function HomePage() {
       }
     }, [user]);
 
-  if (isAuthLoading || !user) {
+  if (isAuthLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

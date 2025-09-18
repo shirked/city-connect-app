@@ -1,13 +1,9 @@
 
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import type { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, type User as FirebaseUser } from 'firebase/auth';
-import { doc, setDoc, getDoc } from "firebase/firestore";
-import { useToast } from './use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -19,66 +15,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mapFirebaseUser = async (firebaseUser: FirebaseUser): Promise<User> => {
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
-        return { id: firebaseUser.uid, ...userDoc.data() } as User;
-    }
-    // Fallback if doc doesn't exist for some reason
-    return {
-        id: firebaseUser.uid,
-        email: firebaseUser.email,
-        name: firebaseUser.displayName,
-    };
+// Mock user for prototype phase
+const mockUser: User = {
+  id: 'prototype-user-id',
+  email: 'user@example.com',
+  name: 'Demo User',
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { toast } = useToast();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const mappedUser = await mapFirebaseUser(firebaseUser);
-        setUser(mappedUser);
-      } else {
-        setUser(null);
-      }
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const login = async (email: string, pass: string) => {
-    await signInWithEmailAndPassword(auth, email, pass);
-    router.push('/');
+  const login = async () => {
+    // No-op
+    console.log("Login function called, but is disabled for prototype.");
   };
 
-  const signup = async (email: string, pass: string, name: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    const firebaseUser = userCredential.user;
-    await updateProfile(firebaseUser, { displayName: name });
-    
-    // Also create a user document in Firestore for leaderboard
-    const userDocRef = doc(db, "users", firebaseUser.uid);
-    const userData: Omit<User, 'id'> = { email, name };
-    await setDoc(userDocRef, userData);
-
-    setUser({ id: firebaseUser.uid, ...userData });
-    router.push('/');
+  const signup = async () => {
+    // No-op
+    console.log("Signup function called, but is disabled for prototype.");
   };
 
-  const logout = useCallback(() => {
-    signOut(auth);
-    router.push('/login');
-  }, [router]);
+  const logout = () => {
+    // In a real scenario, this would clear the user state.
+    // For the prototype, we can just log it.
+    console.log("Logout function called, but is disabled for prototype.");
+    // We could redirect to a "logged out" screen if one existed.
+    // For now, we'll just stay on the current page.
+    // If you want a full redirect on logout, we can re-enable it.
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+    <AuthContext.Provider value={{ user: mockUser, login, signup, logout, isLoading: false }}>
       {children}
     </AuthContext.Provider>
   );
