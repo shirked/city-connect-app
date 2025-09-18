@@ -33,7 +33,7 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         <Providers>
           <AuthWrapper>
-            <div className="relative z-10">{children}</div>
+            <div>{children}</div>
             <Toaster />
           </AuthWrapper>
         </Providers>
