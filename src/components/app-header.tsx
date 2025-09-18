@@ -2,11 +2,17 @@
 "use client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
-import { LogOut, PlusCircle, UserCircle, Map, LayoutList, Users } from "lucide-react";
+import { LogOut, PlusCircle, UserCircle, Map, LayoutList, Users, Menu, Home, Compass } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { AppLogo } from "./icons/app-logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function AppHeader() {
   const { user, logout } = useAuth();
@@ -15,10 +21,35 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-8 flex items-center space-x-2">
-          <AppLogo />
-          <span className="font-bold text-lg font-headline">Civic Connect</span>
-        </Link>
+        <div className="mr-4 md:mr-8 flex items-center gap-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem asChild>
+                <Link href="/"><Home className="mr-2 h-4 w-4" />Home</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard"><LayoutList className="mr-2 h-4 w-4" />My Reports</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/community"><Users className="mr-2 h-4 w-4" />Community</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/new"><PlusCircle className="mr-2 h-4 w-4" />New Report</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+           <Link href="/" className="flex items-center space-x-2">
+            <AppLogo />
+            <span className="font-bold text-lg font-headline">Civic Connect</span>
+          </Link>
+        </div>
+
         <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
           <Link
             href="/"
@@ -70,7 +101,7 @@ export function AppHeader() {
         </div>
       </div>
       {/* Mobile navigation bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/95 p-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 border-t bg-background/95 p-2 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
           <div className="grid grid-cols-5 items-center justify-around gap-2">
              <Link href="/" className={cn("flex flex-col items-center gap-1 rounded-md p-2 transition-colors hover:bg-muted", pathname === "/" ? "text-primary" : "text-muted-foreground")}>
                 <Map className="h-5 w-5"/>
