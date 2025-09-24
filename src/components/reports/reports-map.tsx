@@ -16,16 +16,16 @@ interface ReportsMapProps {
 }
 
 const legendItems = [
-    { icon: Car, label: "Road & Traffic", color: "text-blue-700" },
-    { icon: SprayCan, label: "Graffiti", color: "text-purple-700" },
-    { icon: LightbulbOff, label: "Streetlight/Power", color: "text-yellow-700" },
-    { icon: Trash2, label: "Litter & Dumping", color: "text-green-700" },
-    { icon: Wrench, label: "Broken Item", color: "text-orange-700" },
-    { icon: TrafficCone, label: "Hazard/Blockage", color: "text-red-700" },
-    { icon: Waves, label: "Flooding/Leak", color: "text-cyan-700" },
-    { icon: Trees, label: "Tree/Plant Issue", color: "text-emerald-700" },
-    { icon: Bug, label: "Pest Control", color: "text-lime-700" },
-    { icon: HelpCircle, label: "Other", color: "text-gray-700" },
+    { label: "Road & Traffic", color: "bg-blue-700" },
+    { label: "Graffiti", color: "bg-purple-700" },
+    { label: "Streetlight/Power", color: "bg-yellow-700" },
+    { label: "Litter & Dumping", color: "bg-green-700" },
+    { label: "Broken Item", color: "bg-orange-700" },
+    { label: "Hazard/Blockage", color: "bg-red-700" },
+    { label: "Flooding/Leak", color: "bg-cyan-700" },
+    { label: "Tree/Plant Issue", color: "bg-emerald-700" },
+    { label: "Pest Control", color: "bg-lime-700" },
+    { label: "Other", color: "bg-gray-700" },
 ];
 
 const getPinConfig = (iconName: string) => {
@@ -114,10 +114,9 @@ export function ReportsMap({ reports }: ReportsMapProps) {
                 <CardContent className="p-3 pt-0">
                     <div className="grid grid-cols-2 gap-x-3 gap-y-1">
                         {legendItems.map(item => {
-                            const Icon = item.icon;
                             return (
                                 <div key={item.label} className="flex items-center gap-2">
-                                    <Icon className={cn("h-4 w-4 shrink-0", item.color)} />
+                                    <div className={cn("h-3 w-3 rounded-sm shrink-0", item.color)} />
                                     <span className="text-xs">{item.label}</span>
                                 </div>
                             )
