@@ -94,8 +94,9 @@ export function ReportsMap({ reports }: ReportsMapProps) {
             >
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="cursor-pointer">
-                    <MapPin className={cn("h-8 w-8", pinConfig.color)} strokeWidth={1.5} />
+                  <div className="cursor-pointer relative flex justify-center items-center">
+                    <MapPin className={cn("h-10 w-10", pinConfig.color)} strokeWidth={1.5} />
+                    <pinConfig.icon className="h-4 w-4 absolute -translate-y-1.5" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
