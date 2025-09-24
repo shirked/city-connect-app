@@ -80,7 +80,7 @@ const whatsappFlow = ai.defineFlow(
     let suggestion;
     try {
         console.log('[whatsappFlow] Getting suggestion from AI...');
-        const { output } = await suggestionPrompt({ body: input.body, hasMedia: !!input.mediaUrl });
+        const { output } = await suggestionPrompt({ body: input.body, hasMedia: !!input.mediaUrl }, { timeout: 15000 });
         suggestion = output;
         console.log('[whatsappFlow] Received suggestion from AI:', suggestion);
     } catch(error) {

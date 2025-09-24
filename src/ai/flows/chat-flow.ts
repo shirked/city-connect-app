@@ -46,7 +46,7 @@ const chatFlow = ai.defineFlow(
     }));
 
     const result = await ai.generate({
-      model: googleAI.model('gemini-1.5-pro-latest'),
+      model: googleAI.model('gemini-1.5-flash-latest'),
       prompt: message,
       history: messages,
       system: `You are a helpful assistant for Civic Connect, a civic issue reporting app. Answer user questions about the app, civic issues, and the community. Always respond in the same language as the user's message.`,
