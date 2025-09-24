@@ -1,17 +1,21 @@
 
 'use server';
 /**
- * @fileOverview Processes incoming WhatsApp messages from Twilio to create a civic report.
+ * @fileOverview Processes incoming WhatsApp messages from Twilio using a stateful conversation model.
  *
  * - processWhatsappMessage - A function that handles the message processing.
  * - WhatsappMessageInput - The input type for the process/WhatsappMessage function.
  */
 
-import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { addReportFromWhatsapp } from '@/lib/whatsapp-actions';
-import { googleAI } from '@genkit-ai/googleai';
 import twilio from 'twilio';
+import {
+  getConversationState,
+  updateConversationState,
+  deleteConversationState,
+  ConversationState,
+} from '@/lib/whatsapp-conversation-service';
 
 const WhatsappMessageInputSchema = z.object({
   from: z.string().describe('The phone number the message is from.'),
@@ -22,35 +26,9 @@ const WhatsappMessageInputSchema = z.object({
 });
 export type WhatsappMessageInput = z.infer<typeof WhatsappMessageInputSchema>;
 
-const ReportSuggestionSchema = z.object({
-    description: z.string().describe("A concise and clear description of the issue based on the user's message. If the message is unclear, ask for more details."),
-    hasSufficientInfo: z.boolean().describe("Set to true if you have enough information (a description AND a photo) to create a report. Otherwise, set to false."),
-    clarificationQuestion: z.string().optional().describe("If hasSufficientInfo is false, ask a question to get the necessary information (e.g., 'Please send a photo of the issue.' or 'Could you describe the problem?')."),
-});
-
 export async function processWhatsappMessage(input: WhatsappMessageInput) {
   return await whatsappFlow(input);
 }
-
-const suggestionPrompt = ai.definePrompt({
-    name: 'whatsappSuggestionPrompt',
-    input: { schema: z.object({ body: z.string(), hasMedia: z.boolean() }) },
-    output: { schema: ReportSuggestionSchema },
-    model: googleAI.model('gemini-1.5-flash-latest'),
-    prompt: `You are an AI assistant for a civic reporting hotline. Your goal is to create a valid report from an incoming WhatsApp message. A valid report needs a description and a photo.
-    
-    Analyze the user's message and current context.
-    - User's message: \`{{{body}}}\`
-    - Does the message include a photo? \`{{{hasMedia}}}\`
-    
-    - If the user's message is just a greeting or conversational (e.g., "hello", "can you help?"), ask them to describe the issue and send a photo.
-    - If a photo is missing, ask for a photo.
-    - If a description is missing, ask for one.
-    - If both a photo and a clear description are present, extract the description and determine that you have sufficient info.
-    
-    Respond with the extracted information in the requested JSON format.
-    `,
-});
 
 const whatsappFlow = ai.defineFlow(
   {
@@ -59,64 +37,97 @@ const whatsappFlow = ai.defineFlow(
     outputSchema: z.void(),
   },
   async (input) => {
-    console.log('[whatsappFlow] Started processing for:', input.from);
-
+    console.log(`[whatsappFlow] Started for ${input.from}. State machine initiated.`);
     const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
     const sendReply = async (message: string) => {
       try {
-        console.log(`[whatsappFlow] Attempting to send reply to ${input.from}: "${message}"`);
+        console.log(`[whatsappFlow] Replying to ${input.from}: "${message}"`);
         await twilioClient.messages.create({
           body: message,
           from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
           to: input.from,
         });
-        console.log(`[whatsappFlow] Successfully sent reply to ${input.from}.`);
       } catch (error) {
         console.error(`[whatsappFlow] CRITICAL: Failed to send Twilio message to ${input.from}. Error:`, error);
       }
     };
-    
-    let suggestion;
-    try {
-        console.log('[whatsappFlow] Getting suggestion from AI...');
-        const { output } = await suggestionPrompt({ body: input.body, hasMedia: !!input.mediaUrl }, { timeout: 15000 });
-        suggestion = output;
-        console.log('[whatsappFlow] Received suggestion from AI:', suggestion);
-    } catch(error) {
-        console.error('[whatsappFlow] CRITICAL: Failed to get suggestion from AI.', error);
-        await sendReply('Sorry, I am having trouble understanding. Please try sending your message again.');
-        return;
-    }
 
-    if (!suggestion) {
-        console.error('[whatsappFlow] CRITICAL: AI returned a null or undefined suggestion.');
-        await sendReply('Sorry, there was an unexpected error. Please try again in a moment.');
-        return;
-    }
+    const currentState = await getConversationState(input.from);
+    const userMessage = input.body.toLowerCase().trim();
 
-    if (!suggestion.hasSufficientInfo || !input.mediaUrl) {
-      if (suggestion.clarificationQuestion) {
-        await sendReply(suggestion.clarificationQuestion);
-      } else {
-        await sendReply("Could you please provide more details and a photo so I can submit the report?");
-      }
+    // Handle reset/cancel commands at any stage
+    if (['reset', 'cancel', 'stop'].includes(userMessage)) {
+      await deleteConversationState(input.from);
+      await sendReply("Your session has been reset. Send 'Hi' or 'Report' to start a new report.");
       return;
     }
 
-    try {
-      console.log('[whatsappFlow] Creating report in database...');
-      const newReportId = await addReportFromWhatsapp({
-        description: suggestion.description,
-        photoUrl: input.mediaUrl!, 
-        location: (input.latitude && input.longitude) ? { lat: parseFloat(input.latitude), lng: parseFloat(input.longitude) } : undefined,
-        reporterPhone: input.from,
-      });
-      console.log('[whatsappFlow] Successfully created report with ID:', newReportId);
-      await sendReply(`Thank you! Your report has been submitted successfully. You can track its progress with report ID: ${newReportId}`);
-    } catch (error) {
-      console.error('[whatsappFlow] CRITICAL: Failed to create report from WhatsApp message:', error);
-      await sendReply('Sorry, there was an error submitting your report. Please try again later.');
+    switch (currentState.step) {
+      case 'AWAITING_PHOTO':
+        if (!input.mediaUrl) {
+          await sendReply("I see you sent a message, but I need a photo of the issue to proceed. Please send a picture.");
+          return;
+        }
+        currentState.photoUrl = input.mediaUrl;
+        currentState.step = 'AWAITING_DESCRIPTION';
+        await updateConversationState(input.from, currentState);
+        await sendReply("Great, I've got the photo! Now, please describe the issue for me.");
+        break;
+
+      case 'AWAITING_DESCRIPTION':
+        if (!input.body) {
+          await sendReply("I need a text description of the issue. Could you please explain what's wrong?");
+          return;
+        }
+        currentState.description = input.body;
+        currentState.step = 'AWAITING_LOCATION';
+        await updateConversationState(input.from, currentState);
+        await sendReply("Thanks for the description. Lastly, please share your location using the WhatsApp location feature. This helps us pinpoint the exact spot.");
+        break;
+
+      case 'AWAITING_LOCATION':
+         if (!input.latitude || !input.longitude) {
+            await sendReply("I'm still waiting for the location. Please use the 'Attach' (paperclip icon) -> 'Location' feature in WhatsApp to send it.");
+            return;
+        }
+        currentState.location = { lat: parseFloat(input.latitude), lng: parseFloat(input.longitude) };
+        currentState.step = 'COMPLETED';
+        await updateConversationState(input.from, currentState);
+
+        // All information gathered, now create the report
+        await sendReply("Thank you! I have all the information. I'm submitting your report now. I'll send a confirmation in just a moment.");
+
+        try {
+          const newReportId = await addReportFromWhatsapp({
+            description: currentState.description!,
+            photoUrl: currentState.photoUrl!,
+            location: currentState.location,
+            reporterPhone: input.from,
+          });
+          await sendReply(`Success! Your report has been submitted with ID: ${newReportId}. Thank you for helping improve your community.`);
+          // Clean up the conversation state
+          await deleteConversationState(input.from);
+        } catch (error) {
+          console.error('[whatsappFlow] CRITICAL: Failed to create report from stateful conversation:', error);
+          await sendReply('Sorry, there was an error submitting your final report. Please try starting a new report later.');
+        }
+        break;
+
+      default: // This also covers the 'START' case
+        // Check for greeting to start the flow
+        if (['hi', 'hello', 'report', 'start'].includes(userMessage)) {
+            const newState: ConversationState = { step: 'AWAITING_PHOTO' };
+            await updateConversationState(input.from, newState);
+            await sendReply("Hello! I can help you report a civic issue. Please start by sending a photo of the problem.");
+        } else {
+            await sendReply("Welcome to Civic Connect! Send 'Hi' or 'Report' to begin creating a new civic issue report.");
+        }
+        break;
     }
   }
 );
+
+// We remove the old AI-based prompt and schema as they are no longer needed
+// for the main conversation flow.
+import { ai } from '@/ai/genkit';
