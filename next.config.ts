@@ -36,6 +36,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "api.twilio.com",
+      },
+      {
+        protocol: "https",
+        hostname: "api.qrserver.com",
       }
     ],
   },
