@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Bot, MessageCircle, Scale, Sprout, Users } from "lucide-react";
+import { Award, Bot, MessageCircle, Sprout } from "lucide-react";
 import { ChatBot } from "@/components/community/chat-bot";
 import { InspirationTab } from "@/components/community/inspiration-tab";
 import { LeaderboardTable } from "@/components/community/leaderboard-table";
@@ -17,13 +17,11 @@ export default function CommunityPage() {
             </div>
 
             <Tabs defaultValue="rewards" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 h-auto">
+                <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
                     <TabsTrigger value="rewards"><Award className="mr-2" /> Rewards</TabsTrigger>
-                    <TabsTrigger value="transparency"><Scale className="mr-2" /> Transparency</TabsTrigger>
                     <TabsTrigger value="whatsapp"><MessageCircle className="mr-2" /> WhatsApp</TabsTrigger>
                     <TabsTrigger value="inspiration"><Sprout className="mr-2" /> Inspiration</TabsTrigger>
                     <TabsTrigger value="chatbot"><Bot className="mr-2" /> Chat Bot</TabsTrigger>
-                    <TabsTrigger value="ngo"><Users className="mr-2" /> NGOs</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="rewards">
@@ -33,16 +31,6 @@ export default function CommunityPage() {
                         </CardHeader>
                         <CardContent>
                             <LeaderboardTable />
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="transparency">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Transparency Portal</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p>This portal will provide insights into how the city is handling reported issues, including resolution times and budget allocation. (Coming soon)</p>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -61,16 +49,6 @@ export default function CommunityPage() {
                 </TabsContent>
                 <TabsContent value="chatbot">
                    <ChatBot />
-                </TabsContent>
-                <TabsContent value="ngo">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>NGO Connect</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <p>This section will list local NGOs and provide ways to connect and volunteer for community improvement projects. (Coming soon)</p>
-                        </CardContent>
-                    </Card>
                 </TabsContent>
             </Tabs>
         </div>
