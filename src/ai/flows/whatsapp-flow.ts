@@ -96,8 +96,12 @@ const whatsappFlow = ai.defineFlow(
     }
 
     if (!suggestion.hasSufficientInfo || !input.mediaUrl) {
-        await sendReply(suggestion.clarificationQuestion || "Could you please provide more details and a photo so I can submit the report?");
-        return;
+      if (suggestion.clarificationQuestion) {
+        await sendReply(suggestion.clarificationQuestion);
+      } else {
+        await sendReply("Could you please provide more details and a photo so I can submit the report?");
+      }
+      return;
     }
 
     try {

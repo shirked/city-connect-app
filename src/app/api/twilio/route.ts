@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   // Reconstruct the full URL, including the protocol and host.
   // This is crucial for validation.
   const host = req.headers.get('host');
-  const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+  const protocol = req.headers.get('x-forwarded-proto') || 'https';
   // Use new URL() to handle potential double slashes and normalize the path.
   const fullUrl = new URL(req.nextUrl.pathname, `${protocol}://${host}`).toString();
 
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
   
   try {
     // Asynchronously process the message without blocking the response to Twilio
+    // IMPORTANT: We do not await this promise. We want it to run in the background.
     processWhatsappMessage({
         from,
         body: messageBody,
