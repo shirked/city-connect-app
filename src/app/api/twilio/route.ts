@@ -8,8 +8,7 @@ export async function POST(req: NextRequest) {
 
   // Validate that the request is coming from Twilio
   const twilioSignature = req.headers.get('x-twilio-signature');
-  // Use a server-side environment variable for the site URL for security and flexibility.
-  const url = `${process.env.SITE_URL}/api/twilio`;
+  const url = `${process.env.SITE_URL}${req.nextUrl.pathname}${req.nextUrl.search}`;
   const authToken = process.env.TWILIO_AUTH_TOKEN || '';
 
   const params: { [key: string]: string } = {};
@@ -20,6 +19,12 @@ export async function POST(req: NextRequest) {
   }
 
   if (!twilioSignature || !twilio.validateRequest(authToken, twilioSignature, url, params)) {
+    // Log the validation failure for easier debugging
+    console.error('Twilio webhook validation failed.', {
+      url,
+      twilioSignature,
+      params,
+    });
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
@@ -44,14 +49,13 @@ export async function POST(req: NextRequest) {
 
     // Respond to Twilio immediately to acknowledge receipt of the message
     const twiml = new twilio.twiml.MessagingResponse();
-    // Optionally send a quick "we're processing your message" response here, 
-    // but the main logic will send a more detailed reply.
+    // The main logic in whatsapp-flow.ts will send the actual reply.
     return new NextResponse(twiml.toString(), {
       headers: { 'Content-Type': 'text/xml' },
     });
 
   } catch (error) {
     console.error('Error in Twilio webhook:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return new NextResponse('Internal ServerError', { status: 500 });
   }
 }
