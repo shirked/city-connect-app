@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
 
   // Validate that the request is coming from Twilio
   const twilioSignature = req.headers.get('x-twilio-signature');
-  const url = process.env.NEXT_PUBLIC_SITE_URL + '/api/twilio';
+  // Use an environment variable for the site URL for security and flexibility.
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/api/twilio`;
   const authToken = process.env.TWILIO_AUTH_TOKEN || '';
 
   const params: { [key: string]: string } = {};
