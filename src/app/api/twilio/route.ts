@@ -7,9 +7,15 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const params = new URLSearchParams(body);
 
+  // Reconstruct the full URL, including the protocol and host.
+  // This is crucial for validation.
+  const host = req.headers.get('host');
+  const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
+  // Use new URL() to handle potential double slashes and normalize the path.
+  const fullUrl = new URL(req.nextUrl.pathname, `${protocol}://${host}`).toString();
+
   // Validate that the request is coming from Twilio
   const twilioSignature = req.headers.get('x-twilio-signature');
-  const url = `${process.env.SITE_URL}${req.nextUrl.pathname}`;
   const authToken = process.env.TWILIO_AUTH_TOKEN || '';
 
   const paramObject: { [key: string]: string } = {};
@@ -17,10 +23,10 @@ export async function POST(req: NextRequest) {
       paramObject[key] = value;
   }
   
-  if (!twilioSignature || !twilio.validateRequest(authToken, twilioSignature, url, paramObject)) {
+  if (!twilioSignature || !twilio.validateRequest(authToken, twilioSignature, fullUrl, paramObject)) {
     // Log the validation failure for easier debugging in Vercel logs
     console.error('Twilio webhook validation failed.', {
-      url,
+      url: fullUrl,
       twilioSignature,
       params: paramObject,
     });
