@@ -36,7 +36,7 @@ const suggestionPrompt = ai.definePrompt({
     name: 'whatsappSuggestionPrompt',
     input: { schema: z.object({ body: z.string(), hasMedia: z.boolean() }) },
     output: { schema: ReportSuggestionSchema },
-    model: googleAI.model('gemini-pro'),
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: `You are an AI assistant for a civic reporting hotline. Your goal is to create a valid report from an incoming WhatsApp message. A valid report needs a description and a photo.
     
     Analyze the user's message and current context.
