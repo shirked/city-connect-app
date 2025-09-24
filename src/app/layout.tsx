@@ -33,6 +33,7 @@ export default function RootLayout({
       <body className={cn('font-body antialiased')}>
         <Providers>
           <AuthWrapper>
+            <AppHeader />
             <div className="flex-1 w-full">{children}</div>
             <Toaster />
           </AuthWrapper>
