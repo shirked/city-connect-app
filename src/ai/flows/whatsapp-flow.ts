@@ -106,6 +106,10 @@ const whatsappFlow = ai.defineFlow(
             reporterPhone: input.from,
           });
           await sendReply(`Success! Your report has been submitted with ID: ${newReportId}. Thank you for helping improve your community.`);
+          
+          const appUrl = process.env.SITE_URL || 'https://your-app-url.com'; // Fallback URL
+          await sendReply(`Your report is now live and visible to the community. You can view it on the map here: ${appUrl}`);
+
           // Clean up the conversation state
           await deleteConversationState(input.from);
         } catch (error) {
