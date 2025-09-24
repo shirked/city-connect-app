@@ -7,27 +7,41 @@ import Map, { Marker, NavigationControl, GeolocateControl } from 'react-map-gl/m
 import type { Report } from "@/lib/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { MapPin } from 'lucide-react';
+import { MapPin, Car, SprayCan, LightbulbOff, Trash2, Wrench, TrafficCone, Waves, Trees, Bug, HelpCircle } from 'lucide-react';
 import { ReportDialog } from './report-dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 interface ReportsMapProps {
   reports: Report[];
 }
 
-const getPinColor = (iconName: string) => {
-    const colorMap: { [key: string]: string } = {
-        'Car': 'text-blue-700 fill-blue-700/40',
-        'SprayCan': 'text-purple-700 fill-purple-700/40',
-        'LightbulbOff': 'text-yellow-700 fill-yellow-700/40',
-        'Trash2': 'text-green-700 fill-green-700/40',
-        'Wrench': 'text-orange-700 fill-orange-700/40',
-        'TrafficCone': 'text-red-700 fill-red-700/40',
-        'Waves': 'text-cyan-700 fill-cyan-700/40',
-        'Trees': 'text-emerald-700 fill-emerald-700/40',
-        'Bug': 'text-lime-700 fill-lime-700/40',
-        'HelpCircle': 'text-gray-700 fill-gray-700/40',
+const legendItems = [
+    { icon: Car, label: "Road & Traffic", color: "text-blue-700" },
+    { icon: SprayCan, label: "Graffiti", color: "text-purple-700" },
+    { icon: LightbulbOff, label: "Streetlight/Power", color: "text-yellow-700" },
+    { icon: Trash2, label: "Litter & Dumping", color: "text-green-700" },
+    { icon: Wrench, label: "Broken Item", color: "text-orange-700" },
+    { icon: TrafficCone, label: "Hazard/Blockage", color: "text-red-700" },
+    { icon: Waves, label: "Flooding/Leak", color: "text-cyan-700" },
+    { icon: Trees, label: "Tree/Plant Issue", color: "text-emerald-700" },
+    { icon: Bug, label: "Pest Control", color: "text-lime-700" },
+    { icon: HelpCircle, label: "Other", color: "text-gray-700" },
+];
+
+const getPinConfig = (iconName: string) => {
+    const iconMap: { [key: string]: { icon: React.ElementType, color: string } } = {
+        'Car': { icon: Car, color: 'text-blue-700 fill-blue-700/40' },
+        'SprayCan': { icon: SprayCan, color: 'text-purple-700 fill-purple-700/40' },
+        'LightbulbOff': { icon: LightbulbOff, color: 'text-yellow-700 fill-yellow-700/40' },
+        'Trash2': { icon: Trash2, color: 'text-green-700 fill-green-700/40' },
+        'Wrench': { icon: Wrench, color: 'text-orange-700 fill-orange-700/40' },
+        'TrafficCone': { icon: TrafficCone, color: 'text-red-700 fill-red-700/40' },
+        'Waves': { icon: Waves, color: 'text-cyan-700 fill-cyan-700/40' },
+        'Trees': { icon: Trees, color: 'text-emerald-700 fill-emerald-700/40' },
+        'Bug': { icon: Bug, color: 'text-lime-700 fill-lime-700/40' },
+        'HelpCircle': { icon: HelpCircle, color: 'text-gray-700 fill-gray-700/40' },
     };
-    return colorMap[iconName] || colorMap['HelpCircle'];
+    return iconMap[iconName] || iconMap['HelpCircle'];
 };
 
 export function ReportsMap({ reports }: ReportsMapProps) {
@@ -66,7 +80,7 @@ export function ReportsMap({ reports }: ReportsMapProps) {
         <NavigationControl position="top-left" />
         
         {reports.map((report) => {
-          const pinColor = getPinColor(report.iconName);
+          const pinConfig = getPinConfig(report.iconName);
           return (
             <Marker
               key={report.id}
@@ -81,7 +95,7 @@ export function ReportsMap({ reports }: ReportsMapProps) {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="cursor-pointer">
-                    <MapPin className={cn("h-8 w-8", pinColor)} strokeWidth={1.5} />
+                    <MapPin className={cn("h-8 w-8", pinConfig.color)} strokeWidth={1.5} />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -91,6 +105,27 @@ export function ReportsMap({ reports }: ReportsMapProps) {
             </Marker>
           );
         })}
+
+        <div className="absolute bottom-4 right-4">
+            <Card className="max-w-xs bg-background/80 backdrop-blur-sm">
+                <CardHeader className="p-3">
+                    <CardTitle className="text-base">Map Legend</CardTitle>
+                </CardHeader>
+                <CardContent className="p-3 pt-0">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                        {legendItems.map(item => {
+                            const Icon = item.icon;
+                            return (
+                                <div key={item.label} className="flex items-center gap-2">
+                                    <Icon className={cn("h-4 w-4 shrink-0", item.color)} />
+                                    <span className="text-xs">{item.label}</span>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       </Map>
 
       {selectedReport && (
