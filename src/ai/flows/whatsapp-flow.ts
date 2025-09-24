@@ -59,18 +59,41 @@ const whatsappFlow = ai.defineFlow(
     outputSchema: z.void(),
   },
   async (input) => {
+    console.log('[whatsappFlow] Started processing for:', input.from);
+
     const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
     const sendReply = async (message: string) => {
-      await twilioClient.messages.create({
-        body: message,
-        from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
-        to: input.from,
-      });
+      try {
+        console.log(`[whatsappFlow] Attempting to send reply to ${input.from}: "${message}"`);
+        await twilioClient.messages.create({
+          body: message,
+          from: `whatsapp:${process.env.TWILIO_PHONE_NUMBER}`,
+          to: input.from,
+        });
+        console.log(`[whatsappFlow] Successfully sent reply to ${input.from}.`);
+      } catch (error) {
+        console.error(`[whatsappFlow] CRITICAL: Failed to send Twilio message to ${input.from}. Error:`, error);
+      }
     };
     
-    const { output } = await suggestionPrompt({ body: input.body, hasMedia: !!input.mediaUrl });
-    const suggestion = output!;
+    let suggestion;
+    try {
+        console.log('[whatsappFlow] Getting suggestion from AI...');
+        const { output } = await suggestionPrompt({ body: input.body, hasMedia: !!input.mediaUrl });
+        suggestion = output;
+        console.log('[whatsappFlow] Received suggestion from AI:', suggestion);
+    } catch(error) {
+        console.error('[whatsappFlow] CRITICAL: Failed to get suggestion from AI.', error);
+        await sendReply('Sorry, I am having trouble understanding. Please try sending your message again.');
+        return;
+    }
+
+    if (!suggestion) {
+        console.error('[whatsappFlow] CRITICAL: AI returned a null or undefined suggestion.');
+        await sendReply('Sorry, there was an unexpected error. Please try again in a moment.');
+        return;
+    }
 
     if (!suggestion.hasSufficientInfo || !input.mediaUrl) {
         await sendReply(suggestion.clarificationQuestion || "Could you please provide more details and a photo so I can submit the report?");
@@ -78,16 +101,17 @@ const whatsappFlow = ai.defineFlow(
     }
 
     try {
+      console.log('[whatsappFlow] Creating report in database...');
       const newReportId = await addReportFromWhatsapp({
         description: suggestion.description,
-        // The check above ensures mediaUrl is present.
         photoUrl: input.mediaUrl!, 
         location: (input.latitude && input.longitude) ? { lat: parseFloat(input.latitude), lng: parseFloat(input.longitude) } : undefined,
         reporterPhone: input.from,
       });
+      console.log('[whatsappFlow] Successfully created report with ID:', newReportId);
       await sendReply(`Thank you! Your report has been submitted successfully. You can track its progress with report ID: ${newReportId}`);
     } catch (error) {
-      console.error('Failed to create report from WhatsApp message:', error);
+      console.error('[whatsappFlow] CRITICAL: Failed to create report from WhatsApp message:', error);
       await sendReply('Sorry, there was an error submitting your report. Please try again later.');
     }
   }
